@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { getDashboardSummary } from "../api/dashboard";
 import { listEntries } from "../api/entries";
-import { getBudget } from "../api/budgets";
-import { currentYearMonth } from "../api/client";
-import type { DashboardSummary, Entry, MonthlyBudget } from "../types";
+import type { DashboardSummary, Entry } from "../types";
 import { StatTile } from "../components/StatTile";
 import { SpendingByCategoryChart } from "../components/SpendingByCategoryChart";
 import { AddEntryForm } from "../components/AddEntryForm";
 import { EntryList } from "../components/EntryList";
-import { BudgetProgress } from "../components/BudgetProgress";
 
 function formatCurrency(value: number): string {
   return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -17,19 +14,17 @@ function formatCurrency(value: number): string {
 export function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [budget, setBudget] = useState<MonthlyBudget | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     setError(null);
-    return Promise.all([getDashboardSummary(), listEntries(), getBudget(currentYearMonth())])
-      .then(([summary, { entries }, budget]) => {
+    return Promise.all([getDashboardSummary(), listEntries()])
+      .then(([summary, { entries }]) => {
         setSummary(summary);
         setEntries(entries);
-        setBudget(budget);
       })
-      .catch(() => setError("Could not load your budget data."));
+      .catch(() => setError("Could not load your dashboard data."));
   }, []);
 
   useEffect(() => {
@@ -46,7 +41,7 @@ export function DashboardPage() {
       {loading && <p>Loading…</p>}
       {error && <p className="form-error">{error}</p>}
 
-      {!loading && !error && summary && budget && (
+      {!loading && !error && summary && (
         <>
           <div className="stat-row">
             <StatTile label="Total income" value={formatCurrency(summary.totalIncome)} tone="positive" />
@@ -58,8 +53,6 @@ export function DashboardPage() {
             />
             <StatTile label="Total savings" value={formatCurrency(summary.totalSavings)} tone="positive" />
           </div>
-
-          <BudgetProgress budget={budget} onUpdated={refresh} />
 
           <div className="dashboard-grid">
             <SpendingByCategoryChart data={summary.spendingByCategory} />
