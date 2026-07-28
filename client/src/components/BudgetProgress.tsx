@@ -51,7 +51,9 @@ export function BudgetProgress({ budget, onUpdated }: Props) {
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            onFocus={(e) => e.target.select()}
             disabled={pending}
+            autoFocus
           />
           <button type="submit" disabled={pending || !amount}>
             Save budget
